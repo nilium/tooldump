@@ -21,10 +21,10 @@ module ArgParser
   # === Options Format
   #
   # :parameters => {
-  #  :name => {
+  #  'name' (string) => {
   #   The name of the parameter.
   #
-  #   :alias => :other_name,
+  #   :alias => 'other_name' (string),
   #     Defines this param as an alias for another option. If set, you should
   #     not set any other options for this param, as they will be ignored.
   #
@@ -65,7 +65,7 @@ module ArgParser
       name = nil
 
       if ! (match = (arg.match(@@SHORT_OPT) || arg.match(@@LONG_OPT))).nil? && swallow_key.nil?
-        name = match[:name].to_sym
+        name = match[:name]
         opt = parameters[name]
 
         is_flag = true
