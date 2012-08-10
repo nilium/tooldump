@@ -168,5 +168,6 @@ module ArgParser
 end # ArgParser
 
 if __FILE__ == $0
-  STDOUT.print ArgParser.parse_args(ARGV, :implicit => true).inspect, $/
+  require 'json'
+  print JSON[ArgParser.parse_args(ARGV, :implicit => true)], $/
 end
