@@ -72,6 +72,7 @@ module ArgParser
   #   parser will raise an exception for options that do not exist.
   #
   def self.parse_args(args, options={})
+    #TODO: rewrite this entire thing because it's a mess.
     args = args.clone
 
     implicit = !! options[:implicit]
