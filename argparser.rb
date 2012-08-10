@@ -3,8 +3,20 @@
 module ArgParser
 
   # used by parse_args
-  @@SHORT_OPT = /^-(?<name>[a-zA-Z0-9])(?<equals>\s*=\s*)?(?<value>.+)?$/
-  @@LONG_OPT = /^--(?<name>\w+)(?:(?<equals>\s*=\s*|\s+)(?<value>.+)?)?$/
+  @@SHORT_OPT = /^
+    ^
+    - (?<name> [\w] )
+      (?<equals> \s* = \s* )?
+      (?<value> .+ )?
+    $/ix
+  @@LONG_OPT = /^
+    --
+      (?<name> \w+ )
+      (?:
+        (?<equals> \s* = \s* | \s+ )
+        (?<value> .+ )?
+      )?
+    $/ix
 
   # === Options Format
   #
