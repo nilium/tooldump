@@ -43,7 +43,19 @@ module ArgParser
       )?
     $/ix
 
-  # === Options Format
+  # Parses an array of arguments of three forms:
+  #  1. Short form: -p[value] where x is a letter, number, or _ and value is any
+  #     string.
+  #  2. Long form:  --param[ value|=value] where foo is any string of letters,
+  #     numbers, or underscores and value is any string. The param and value
+  #     must be separated by either whitespace or an = symbol (the = symbol may
+  #     optionally be surrounded by as much or as little whitespace as you want)
+  #     otherwise the parameter is treated as a flag (true/false) instead of a
+  #     value.
+  #  3. Input form: anything that doesn't conform to (1) or (2) is considered an
+  #     input (such as a filename) and may be any string whatsoever.
+  #
+  # === Options
   #
   # :parameters => {
   #  'name' (string) => {
