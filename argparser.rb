@@ -43,6 +43,9 @@ module ArgParser
       )?
     $/ix
 
+  @@ARG_RESULT = Struct.new(:params, :inputs)
+  @@ARG_INFO = Struct.new(:value, :index)
+
   # Parses an array of arguments of three forms:
   #  1. Short form: -p[value]  where p is a letter, number, or underscore and
   #     value is any string.
@@ -61,21 +64,27 @@ module ArgParser
   #  'name' (string) => {
   #   The name of the parameter.
   #
-  #   :alias => 'other_name' (string),
+  #   :alias => 'other_name' (nil)
   #     Defines this param as an alias for another option. If set, you should
   #     not set any other options for this param, as they will be ignored.
   #
-  #   :multiple => bool,
+  #   :multiple => bool (false)
   #     Can have one or more inputs (true) or only one (false).
-  #     Defaults to false.
   #
-  #   :flag => bool,
+  #   :flag => bool
   #     Whether the input is a flag (if true, the value will be true if found).
-  #     Defaults to true.
   #
-  #   :swallow => bool
+  #   :swallow => bool (false)
   #     Whether to swallow all following arguments as values of this argument.
   #     Forces :mulitple => true and :flag => false. Defaults to false.
+  #
+  #   :default => object (nil)
+  #     The default value for this parameter. If none specified, this param will
+  #     not be included in params if never specified.
+  #
+  #   :parser => proc or lambda (nil)
+  #     If provided, param values will be passed to this proc/lambda for
+  #     parsing. Whatever value the parser returns is the value of the param.
   #  }
   # }
   #
@@ -83,11 +92,16 @@ module ArgParser
   #   Whether all options implicitly exist or not. If false (the default), the
   #   parser will raise an exception for options that do not exist.
   #
+  # :allow_inputs => bool (true)
+  #   Whether to allow inputs (e.g., filenames and such). If false, will raise
+  #   an exception for any unrecognized arguments.
+  #
   def self.parse_args(args, options={})
     #TODO: rewrite this entire thing because it's a mess.
     args = args.clone
 
     implicit = !! options[:implicit]
+    allow_inputs = !! options[:allow_inputs]
     parameters = options[:parameters] || {}
 
     inputs = []
@@ -136,6 +150,8 @@ module ArgParser
           next
         end
 
+        parser = opt[:parser]
+
         value = is_flag ? true : match[:value]
 
         if ! is_flag && (value.nil? || value.empty?)
@@ -146,12 +162,14 @@ module ArgParser
           raise "Invalid argument: #{arg}."
         end
 
+        value = parser[value] unless parser.nil?
+
         container = nil
 
         if params.include?(name) && allow_multiple
           container = params[name]
-          cur_value = container[:value]
-          cur_indices = container[:index]
+          cur_value = container.value
+          cur_indices = container.index
           indices = nil
           if cur_value.is_a? Array
             value = [*cur_value, value]
@@ -160,22 +178,14 @@ module ArgParser
             value = [cur_value, value]
             indices = [cur_index, index]
           end
-          container[:value] = value
-          container[:index] = indices
+          container.value = value
+          container.index = indices
         elsif allow_multiple
-          container = {
-            :kind => :param,
-            :value => [value],
-            :index => [index]
-          }
+          container = @@ARG_INFO.new([value], [index])
         elsif params.include?(name)
           raise "Invalid argument: #{arg} already set to '#{params[name]}'."
         else
-          container = {
-            :kind => :param,
-            :value => value,
-            :index => index
-          }
+          container = @@ARG_INFO.new(value, index)
         end
 
         params.store name, container
@@ -186,21 +196,22 @@ module ArgParser
         else
           params[swallow_key] = [*container, arg]
         end
+      elsif allow_inputs
+        inputs << @@ARG_INFO.new(arg, index)
       else
-        inputs << {
-          :kind => :input,
-          :value => arg,
-          :index => index
-        }
+        raise "Unrecognized argument: #{arg}"
       end
 
       index += 1
     end
 
-    return {
-      :inputs => inputs,
-      :params => params
+    parameters.each {|k, v|
+      if v[:default] && (! params.include?(k))
+        params[k] = @@ARG_INFO.new(v[:default], -1)
+      end
     }
+
+    return @@ARG_RESULT.new(params, inputs)
   end
 
 end # ArgParser
