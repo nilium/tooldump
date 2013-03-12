@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# A very oddly specific script: picks $COUNT random files from the parent
+# directory and hardlink them in the current directory. Handy if you have a ton
+# of reference photos and just want to force yourself to draw something by
+# incorporating some number of them. Defaults to 8, but it'll work with any
+# number even if you're probably going to find more than 8 random files useless.
+
+# running zrand 0 will remove all randomly selected files and the temporary
+# hidden file (.zrand-files, can be changed by exporting your own RANDFILE).
+
+# depends on the pick_rand script.
+
+RANDFILE=${RANDFILE:-"./.zrand-files"}
+COUNT=${1:-8}
+
+if [[ -e "$RANDFILE" ]] ; then
+  while read FILELINE ; do
+    if [[ "$FILELINE" = ./* ]] ; then
+      rm "./$FILELINE" # ./ not required, but it's extra false security
+    fi
+  done < "$RANDFILE"
+  rm "$RANDFILE"
+fi
+
+if [[ $COUNT -lt 1 ]] ; then
+  exit
+fi
+
+NUMS=({1..$COUNT})
+# use /usr/bin/seq because otherwise I get an odd local version something
+# installed (likely a dependency) and it doesn't recognize -w
+NUMS=($(/usr/bin/seq -w 1 1 "$COUNT" | pick_rand "$COUNT"))
+
+IDX=0
+
+for FILE in $(find -L .. -not -iname '.*' -depth 1 -type f | pick_rand "$COUNT") ; do
+  NUM=${NUMS[$IDX]}
+  OUTFILE="./zr$NUM.$(basename "$FILE")"
+  ln "$FILE" "$OUTFILE"
+  echo "$OUTFILE" >> .zrand-files
+  let "++IDX"
+done
