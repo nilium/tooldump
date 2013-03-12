@@ -37,6 +37,7 @@ IDX=0
 for FILE in $(find -L .. -not -iname '.*' -depth 1 -type f | pick_rand "$COUNT") ; do
   NUM=${NUMS[$IDX]}
   OUTFILE="./zr$NUM.$(basename "$FILE")"
+  echo "Linking $FILE to $OUTFILE"
   ln "$FILE" "$OUTFILE"
   echo "$OUTFILE" >> .zrand-files
   let "++IDX"
