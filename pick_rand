@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby -w
+
+# seed random
+srand File.binread('/dev/random', 16).unpack('qQ').join('').to_i
+
+lines = $stdin.read.chomp.lines.to_a
+count = ARGV.empty? ? 10 : ARGV[0].to_i
+result = []
+
+(0...count).each {
+  |_r|
+  break if lines.empty?
+  index = rand(0 .. lines.length - 1)
+  result << lines.slice!(index).chomp
+}
+
+print result.join ' '
